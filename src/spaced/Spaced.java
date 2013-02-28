@@ -1,5 +1,6 @@
 package spaced;
 
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
@@ -9,6 +10,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Properties;
 import java.util.Scanner;
 
@@ -16,13 +18,20 @@ import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
 import javax.swing.JTextPane;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultStyledDocument;
+import javax.swing.text.DocumentFilter;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.DocumentFilter.FilterBypass;
 import javax.swing.text.StyledDocument;
 import javax.swing.undo.UndoManager;
 
+import parser.LanguageDefinition;
 import parser.ParameterizedWhitespaceOperation;
 import parser.WhitespaceApp;
 import parser.WhitespaceParser;
@@ -153,12 +162,13 @@ public class Spaced implements VMListener {
 			}
 		};
 		actions.put(Actions.RUN, action);
-		
-		action = new SpacedAction("Add Breakpoint", "breakpoint.png", "Adds a debug breakpoint",
-				KeyStroke.getKeyStroke(KeyEvent.VK_D, KeyEvent.CTRL_DOWN_MASK)) {
-			
+
+		action = new SpacedAction("Add Breakpoint", "breakpoint.png",
+				"Adds a debug breakpoint", KeyStroke.getKeyStroke(
+						KeyEvent.VK_D, KeyEvent.CTRL_DOWN_MASK)) {
+
 			private static final long serialVersionUID = 1L;
-			
+
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				JTextPane editor = view.getActiveTab().getEditor();
@@ -166,15 +176,14 @@ public class Spaced implements VMListener {
 					return;
 				int i = editor.getCaretPosition();
 				try {
-					editor.getDocument().insertString(i,
-							"#DBG_BREAK", null);
+					editor.getDocument().insertString(i, "#DBG_BREAK", null);
 				} catch (BadLocationException e1) {
 					e1.printStackTrace();
 				}
 			}
 		};
 		actions.put(Actions.ADD_BREAKPOINT, action);
-		
+
 		action = new SpacedAction("Stop", "stop.png", "Stops the execution",
 				KeyStroke.getKeyStroke(KeyEvent.VK_C, KeyEvent.ALT_DOWN_MASK)) {
 
@@ -383,7 +392,7 @@ public class Spaced implements VMListener {
 	}
 
 	public void newDocument() {
-		DefaultStyledDocument doc = new DefaultStyledDocument();
+		final DefaultStyledDocument doc = new DefaultStyledDocument();
 		doc.addDocumentListener(new DocumentListener() {
 
 			@Override
@@ -394,8 +403,28 @@ public class Spaced implements VMListener {
 
 			@Override
 			public void insertUpdate(DocumentEvent e) {
+				// System.out.println("fsdjfksl");
 				documentChanged = true;
 				view.setSelectedTabMark(true);
+				try {
+					final int offset = e.getOffset();
+					final int length = e.getLength();
+					final char c = e.getDocument().getText(offset, 1).charAt(0);
+					SwingUtilities.invokeLater(new Runnable() {
+
+						@Override
+						public void run() {
+							SimpleAttributeSet set = new SimpleAttributeSet();
+							StyleConstants.setBackground(set,
+									c == ' ' ? Color.blue : Color.red);
+							doc.setCharacterAttributes(offset, length, set,
+									false);
+						}
+					});
+				} catch (BadLocationException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 			}
 
 			@Override
@@ -403,6 +432,22 @@ public class Spaced implements VMListener {
 				// documentChanged = true;
 				// view.setSelectedTabMark(true);
 			}
+		});
+		// doc.addDocumentListener(createSyntaxHighlighter(doc));
+		doc.setDocumentFilter(new DocumentFilter() {
+
+			@Override
+			public void insertString(FilterBypass fb, int offset,
+					String string, AttributeSet attr)
+					throws BadLocationException {
+				System.out.println("fdjskl");
+				super.insertString(fb, offset, string, attr);
+				SimpleAttributeSet sas = new SimpleAttributeSet();
+				StyleConstants.setBackground(sas, Color.blue);
+				((StyledDocument) fb.getDocument()).setCharacterAttributes(
+						offset, 1, sas, false);
+			}
+
 		});
 		view.openTab(doc, "New_" + numNewDocs);
 		numNewDocs++;
@@ -480,8 +525,10 @@ public class Spaced implements VMListener {
 
 				@Override
 				public void changedUpdate(DocumentEvent e) {
+
 				}
 			});
+			doc.addDocumentListener(createSyntaxHighlighter(doc));
 			view.openTab(doc, file.getName());
 			lastDir = file.getParentFile();
 		} catch (FileNotFoundException e) {
@@ -489,6 +536,14 @@ public class Spaced implements VMListener {
 		} catch (BadLocationException e) {
 			e.printStackTrace();
 		}
+	}
+
+	public DocumentListener createSyntaxHighlighter(StyledDocument doc) {
+		HashMap<Character, Color> charMap = new HashMap<Character, Color>();
+		charMap.put(' ', Color.green);
+		charMap.put('\t', Color.blue);
+		charMap.put('\n', Color.red);
+		return new CharHighlighter(charMap, doc);
 	}
 
 	public void saveDocument() {
@@ -525,6 +580,7 @@ public class Spaced implements VMListener {
 	}
 
 	public void exit() {
+		System.out.println("Quitting now...");
 		System.exit(0); // FIXME
 	}
 
