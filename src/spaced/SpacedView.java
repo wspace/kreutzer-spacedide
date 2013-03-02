@@ -14,7 +14,6 @@ import java.lang.reflect.InvocationTargetException;
 
 import javax.swing.ActionMap;
 import javax.swing.JButton;
-import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
