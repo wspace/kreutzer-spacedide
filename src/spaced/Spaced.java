@@ -46,7 +46,7 @@ public class Spaced implements VMListener {
 	}
 
 	public static final String TITLE = "Spaced IDE";
-	public static final String VERSION = "1.1.0";
+	public static final String VERSION = "1.1";
 
 	private Properties properties;
 
@@ -714,9 +714,16 @@ public class Spaced implements VMListener {
 	@Override
 	public void vmPaused() {
 		ParameterizedWhitespaceOperation pwo = virtualMachine.getCurrentPWO();
+		ParameterizedWhitespaceOperation next = virtualMachine.getNextPwo();
 		if (pwo != null) {
-			int pos = pwo.textPos;
-			view.getActiveTab().getEditor().setSelectionStart(pos);
+			int start = pwo.textPos;
+			view.getActiveTab().getEditor().setSelectionStart(start);
+			if (next != null) {
+				int end = next.textPos;
+				view.getActiveTab().getEditor().setSelectionEnd(end);
+				view.getActiveTab().getEditor().setSelectionColor(Color.red);
+				System.out.println("Selection: " + start + " - " + end);
+			}
 		}
 		view.getMemoryTable().update(virtualMachine.getStack().getValueMap(),
 				virtualMachine.getHeap().getValueMap());

@@ -367,6 +367,13 @@ public class WhitespaceMachine implements Runnable {
 		return null;
 	}
 
+	public ParameterizedWhitespaceOperation getNextPwo() {
+		if (isRunning() && isValidPosition(iPtr + 1)) {
+			return program.getOperation(iPtr + 1);
+		}
+		return null;
+	}
+
 	public Stack getStack() {
 		return stack;
 	}
