@@ -1,6 +1,6 @@
 package parser;
 
-public class WhitespaceSyntaxError extends RuntimeException {
+public class WhitespaceSyntaxError extends Exception {
 
 	private static final long serialVersionUID = 1L;
 

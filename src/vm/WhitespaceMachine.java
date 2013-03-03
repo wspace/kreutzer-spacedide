@@ -140,11 +140,12 @@ public class WhitespaceMachine implements Runnable {
 						"Virtual machine is in bad state");
 			}
 		}
-		executionThread = null;
 		state = VMState.TERMINATED;
 		for (VMListener l : listeners.getListeners(VMListener.class)) {
 			l.vmStopped();
 		}
+		
+		executionThread = null;
 	}
 
 	public void start(ExecutionMode mode) {
@@ -239,7 +240,7 @@ public class WhitespaceMachine implements Runnable {
 			iPtr = temp;
 			break;
 		case EXIT:
-			quit();
+			stop();
 			break;
 		case PRINT_INT:
 			out.print(stack.pop());
@@ -296,6 +297,7 @@ public class WhitespaceMachine implements Runnable {
 			return i;
 		} catch (NumberFormatException e) {
 			reportError("Excpected an integer as input!");
+			stop();
 		}
 		return 0;
 	}
@@ -319,9 +321,10 @@ public class WhitespaceMachine implements Runnable {
 		return n >= 0 && n < program.getOperationCount();
 	}
 
-	public void quit() {
-		if (isRunning())
+	public void stop() {
+		if (isRunning()) {
 			state = VMState.TERMINATION_REQUESTED;
+		}
 	}
 
 	private void reset() {

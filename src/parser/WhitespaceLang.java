@@ -1,38 +1,36 @@
 package parser;
 
-import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-public class LanguageDefinition {
+public class WhitespaceLang {
 
-	private static LanguageDefinition whitespace;
+	private static WhitespaceLang whitespace3;
 
 	private final String name;
 	private final String version;
 
 	private final Map<String, WhitespaceOperationType> operationMap;
 
-	private final char binaryZero;
-	private final char binaryOne;
-	private final char integerTermination;
-	private final char labelTermination;
+	public static final char SPACE = ' ';
+	public static final char TAB = '\t';
+	public static final char LINEFEED = '\n';
 
-	private final char[] validChars;
+	public static final char MINUS = TAB;
+	public static final char PLUS = SPACE;
+	public static final char BINARY_ZERO = SPACE;
+	public static final char BINARY_ONE = TAB;
+	public static final char INT_TERMINATION = LINEFEED;
+	public static final char LABEL_TERMINATION = LINEFEED;
 
-	private LanguageDefinition(String name, String version,
-			Map<String, WhitespaceOperationType> operationMap, char binaryZero,
-			char binaryOne, char integerTermination, char labelTermination,
-			char[] validChars) {
+	public static final char[] VALID_CHARS = { SPACE, TAB, LINEFEED };
+
+	private WhitespaceLang(String name, String version,
+			Map<String, WhitespaceOperationType> operationMap) {
 		this.name = name;
 		this.version = version;
 		this.operationMap = operationMap;
-		this.binaryZero = binaryZero;
-		this.binaryOne = binaryOne;
-		this.integerTermination = integerTermination;
-		this.labelTermination = labelTermination;
-		this.validChars = validChars;
 	}
 
 	public Collection<String> keyWords() {
@@ -40,7 +38,7 @@ public class LanguageDefinition {
 	}
 
 	public boolean isIgnored(char c) {
-		for (char cc : validChars) {
+		for (char cc : VALID_CHARS) {
 			if (cc == c)
 				return false;
 		}
@@ -66,8 +64,8 @@ public class LanguageDefinition {
 		return name;
 	}
 
-	public static LanguageDefinition getWhitespaceLanguageDefinition() {
-		if (whitespace == null) {
+	public static WhitespaceLang getWhitespaceVersion3() {
+		if (whitespace3 == null) {
 			HashMap<String, WhitespaceOperationType> lang = new HashMap<String, WhitespaceOperationType>();
 			lang.put("  ", WhitespaceOperationType.PUSH);
 			lang.put(" \n ", WhitespaceOperationType.DUPLICATE);
@@ -93,32 +91,13 @@ public class LanguageDefinition {
 			lang.put("\t\n \t", WhitespaceOperationType.PRINT_INT);
 			lang.put("\t\n\t ", WhitespaceOperationType.READ_CHAR);
 			lang.put("\t\n\t\t", WhitespaceOperationType.READ_INT);
-			char[] valid = new char[] { ' ', '\t', '\n' };
-			whitespace = new LanguageDefinition("Whitespace", "0.3", lang, ' ',
-					'\t', '\n', '\n', valid);
+			whitespace3 = new WhitespaceLang("Whitespace", "0.3", lang);
 		}
-		return whitespace;
-	}
-	
-	public char getBinaryZeroChar() {
-		return binaryZero;
-	}
-	
-	public char getBinaryOneChar() {
-		return binaryOne;
-	}
-	
-	public char getIntegerTerminationChar() {
-		return integerTermination;
-	}
-	
-	public char getLabelTerminationChar() {
-		return labelTermination;
+		return whitespace3;
 	}
 
-	public static LanguageDefinition loadLanguageDefinition(File file) {
-		// TODO implement
-		return null;
+	public static WhitespaceLang getLatestVersion() {
+		return getWhitespaceVersion3();
 	}
 
 	public int getMaxKeywordLength() {

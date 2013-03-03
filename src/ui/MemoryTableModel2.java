@@ -1,4 +1,4 @@
-package spaced;
+package ui;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -19,7 +19,7 @@ public class MemoryTableModel2 extends AbstractTableModel {
 
 	private Object[] colNames;
 	private Object[][] data;
-	
+
 	public MemoryTableModel2() {
 		clear();
 	}
@@ -33,7 +33,7 @@ public class MemoryTableModel2 extends AbstractTableModel {
 	public int getRowCount() {
 		return rows;
 	}
-	
+
 	@Override
 	public String getColumnName(int col) {
 		return colNames[col].toString();
@@ -51,7 +51,7 @@ public class MemoryTableModel2 extends AbstractTableModel {
 		addressSet.addAll(heapMap.keySet());
 		this.rows = addressSet.size();
 		data = new String[rows][colNames.length];
-		System.out.println(addressSet);
+//		System.out.println(addressSet);
 		Iterator<Integer> iterator = addressSet.iterator();
 		int address = 0;
 		for (int i = 0; i < rows; i++) {

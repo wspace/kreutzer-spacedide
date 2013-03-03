@@ -27,21 +27,23 @@ import javax.swing.text.DefaultStyledDocument;
 import javax.swing.text.DocumentFilter;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
-import javax.swing.text.DocumentFilter.FilterBypass;
 import javax.swing.text.StyledDocument;
 import javax.swing.undo.UndoManager;
 
-import parser.LanguageDefinition;
 import parser.ParameterizedWhitespaceOperation;
 import parser.WhitespaceApp;
 import parser.WhitespaceParser;
+import ui.CharHighlighter;
+import ui.EditorTab;
+import ui.SpacedView;
+import ui.UIAction;
 import vm.VMListener;
 import vm.WhitespaceMachine;
 import vm.WhitespaceMachine.ExecutionMode;
 
 public class Spaced implements VMListener {
 
-	public enum Actions {
+	public enum UIActions {
 		NEW_DOC, OPEN, SAVE, CLOSE_DOC, QUIT, UNDO, REDO, MERGE, INSERT_COMMAND, RUN, STOP, DEBUG, RESUME, STEP, SHOW_COMMAND_DIALOG, SHOW_CREDITS, REMOVE_COMMENTS, GENERATE_OUTPUT_CODE, ADD_BREAKPOINT
 	}
 
@@ -70,7 +72,7 @@ public class Spaced implements VMListener {
 	private ActionMap generateActionMap() {
 		ActionMap actions = new ActionMap();
 		// New document
-		AbstractAction action = new SpacedAction("New document", "newdoc.png",
+		AbstractAction action = new UIAction("New document", "newdoc.png",
 				"Creates a new document", KeyStroke.getKeyStroke(KeyEvent.VK_N,
 						KeyEvent.CTRL_DOWN_MASK)) {
 
@@ -81,9 +83,9 @@ public class Spaced implements VMListener {
 				newDocument();
 			}
 		};
-		actions.put(Actions.NEW_DOC, action);
+		actions.put(UIActions.NEW_DOC, action);
 		// Open document
-		action = new SpacedAction("Open", "open.png", "Opens a document",
+		action = new UIAction("Open", "open.png", "Opens a document",
 				KeyStroke.getKeyStroke(KeyEvent.VK_O, KeyEvent.CTRL_DOWN_MASK)) {
 
 			private static final long serialVersionUID = 1L;
@@ -93,8 +95,8 @@ public class Spaced implements VMListener {
 				openDocument();
 			}
 		};
-		actions.put(Actions.OPEN, action);
-		action = new SpacedAction("Save", "save.png",
+		actions.put(UIActions.OPEN, action);
+		action = new UIAction("Save", "save.png",
 				"Saves the selected document", KeyStroke.getKeyStroke(
 						KeyEvent.VK_S, KeyEvent.CTRL_DOWN_MASK)) {
 
@@ -105,8 +107,8 @@ public class Spaced implements VMListener {
 				saveDocument();
 			}
 		};
-		actions.put(Actions.SAVE, action);
-		action = new SpacedAction("Close Document", "close.png",
+		actions.put(UIActions.SAVE, action);
+		action = new UIAction("Close Document", "close.png",
 				"Closes the selected document", KeyStroke.getKeyStroke(
 						KeyEvent.VK_E, KeyEvent.CTRL_DOWN_MASK)) {
 
@@ -117,8 +119,8 @@ public class Spaced implements VMListener {
 				closeDocument();
 			}
 		};
-		actions.put(Actions.CLOSE_DOC, action);
-		action = new SpacedAction("Exit", "exit.png", "Quits the application",
+		actions.put(UIActions.CLOSE_DOC, action);
+		action = new UIAction("Exit", "exit.png", "Quits the application",
 				KeyStroke.getKeyStroke(KeyEvent.VK_Q, KeyEvent.CTRL_DOWN_MASK)) {
 
 			private static final long serialVersionUID = 1L;
@@ -128,8 +130,8 @@ public class Spaced implements VMListener {
 				exit();
 			}
 		};
-		actions.put(Actions.QUIT, action);
-		action = new SpacedAction("Undo", "undo.png", "Undo",
+		actions.put(UIActions.QUIT, action);
+		action = new UIAction("Undo", "undo.png", "Undo",
 				KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.CTRL_DOWN_MASK)) {
 
 			private static final long serialVersionUID = 1L;
@@ -139,8 +141,8 @@ public class Spaced implements VMListener {
 				undo();
 			}
 		};
-		actions.put(Actions.UNDO, action);
-		action = new SpacedAction("Redo", "redo.png", "Redo",
+		actions.put(UIActions.UNDO, action);
+		action = new UIAction("Redo", "redo.png", "Redo",
 				KeyStroke.getKeyStroke(KeyEvent.VK_Y, KeyEvent.CTRL_DOWN_MASK)) {
 
 			private static final long serialVersionUID = 1L;
@@ -150,8 +152,8 @@ public class Spaced implements VMListener {
 				redo();
 			}
 		};
-		actions.put(Actions.REDO, action);
-		action = new SpacedAction("Run", "run.png", "Executes the program",
+		actions.put(UIActions.REDO, action);
+		action = new UIAction("Run", "run.png", "Executes the program",
 				KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.ALT_DOWN_MASK)) {
 
 			private static final long serialVersionUID = 1L;
@@ -161,9 +163,9 @@ public class Spaced implements VMListener {
 				execute();
 			}
 		};
-		actions.put(Actions.RUN, action);
+		actions.put(UIActions.RUN, action);
 
-		action = new SpacedAction("Add Breakpoint", "breakpoint.png",
+		action = new UIAction("Add Breakpoint", "breakpoint.png",
 				"Adds a debug breakpoint", KeyStroke.getKeyStroke(
 						KeyEvent.VK_D, KeyEvent.CTRL_DOWN_MASK)) {
 
@@ -182,9 +184,9 @@ public class Spaced implements VMListener {
 				}
 			}
 		};
-		actions.put(Actions.ADD_BREAKPOINT, action);
+		actions.put(UIActions.ADD_BREAKPOINT, action);
 
-		action = new SpacedAction("Stop", "stop.png", "Stops the execution",
+		action = new UIAction("Stop", "stop.png", "Stops the execution",
 				KeyStroke.getKeyStroke(KeyEvent.VK_C, KeyEvent.ALT_DOWN_MASK)) {
 
 			private static final long serialVersionUID = 1L;
@@ -194,8 +196,8 @@ public class Spaced implements VMListener {
 				stop();
 			}
 		};
-		actions.put(Actions.STOP, action);
-		action = new SpacedAction("Debug", "debug.png",
+		actions.put(UIActions.STOP, action);
+		action = new UIAction("Debug", "debug.png",
 				"Executes the program in debug mode", KeyStroke.getKeyStroke(
 						KeyEvent.VK_D, KeyEvent.ALT_DOWN_MASK)) {
 
@@ -206,8 +208,8 @@ public class Spaced implements VMListener {
 				debug();
 			}
 		};
-		actions.put(Actions.DEBUG, action);
-		action = new SpacedAction("Step", "step.png", "Executes one step",
+		actions.put(UIActions.DEBUG, action);
+		action = new UIAction("Step", "step.png", "Executes one step",
 				KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvent.ALT_DOWN_MASK)) {
 
 			private static final long serialVersionUID = 1L;
@@ -217,8 +219,8 @@ public class Spaced implements VMListener {
 				runStep();
 			}
 		};
-		actions.put(Actions.STEP, action);
-		action = new SpacedAction("Resume", "resume.png",
+		actions.put(UIActions.STEP, action);
+		action = new UIAction("Resume", "resume.png",
 				"Executes untill the next break point is reached",
 				KeyStroke.getKeyStroke(KeyEvent.VK_B, KeyEvent.ALT_DOWN_MASK)) {
 
@@ -229,7 +231,7 @@ public class Spaced implements VMListener {
 				resume();
 			}
 		};
-		actions.put(Actions.RESUME, action);
+		actions.put(UIActions.RESUME, action);
 		action = new AbstractAction("Show Command Dialog") {
 
 			private static final long serialVersionUID = 1L;
@@ -239,7 +241,7 @@ public class Spaced implements VMListener {
 				view.getCommandDialog().setVisible(true);
 			}
 		};
-		actions.put(Actions.SHOW_COMMAND_DIALOG, action);
+		actions.put(UIActions.SHOW_COMMAND_DIALOG, action);
 
 		action = new AbstractAction("Credits") {
 
@@ -250,7 +252,7 @@ public class Spaced implements VMListener {
 				view.showCredits();
 			}
 		};
-		actions.put(Actions.SHOW_CREDITS, action);
+		actions.put(UIActions.SHOW_CREDITS, action);
 
 		action = new AbstractAction("Generate Output Code") {
 
@@ -287,7 +289,7 @@ public class Spaced implements VMListener {
 				}
 			}
 		};
-		actions.put(Actions.GENERATE_OUTPUT_CODE, action);
+		actions.put(UIActions.GENERATE_OUTPUT_CODE, action);
 
 		action = new AbstractAction("Remove Comments") {
 
@@ -298,9 +300,9 @@ public class Spaced implements VMListener {
 				removeComments();
 			}
 		};
-		actions.put(Actions.REMOVE_COMMENTS, action);
+		actions.put(UIActions.REMOVE_COMMENTS, action);
 
-		action = new SpacedAction("Merge", "merge.png",
+		action = new UIAction("Merge", "merge.png",
 				"Opens the merge dialog", KeyStroke.getKeyStroke(KeyEvent.VK_M,
 						KeyEvent.CTRL_DOWN_MASK)) {
 
@@ -340,7 +342,7 @@ public class Spaced implements VMListener {
 				}
 			}
 		};
-		actions.put(Actions.MERGE, action);
+		actions.put(UIActions.MERGE, action);
 
 		return actions;
 	}
@@ -388,7 +390,7 @@ public class Spaced implements VMListener {
 	}
 
 	public static void main(String[] args) {
-		new Spaced();
+		new SpacedNew();
 	}
 
 	public void newDocument() {
@@ -403,7 +405,6 @@ public class Spaced implements VMListener {
 
 			@Override
 			public void insertUpdate(DocumentEvent e) {
-				// System.out.println("fsdjfksl");
 				documentChanged = true;
 				view.setSelectedTabMark(true);
 				try {
@@ -619,7 +620,7 @@ public class Spaced implements VMListener {
 
 	public void stop() {
 		if (virtualMachine != null && virtualMachine.isRunning()) {
-			virtualMachine.quit();
+			virtualMachine.stop();
 			Thread executionThread = virtualMachine.getExecutionThread();
 			if (executionThread != null) {
 				try {

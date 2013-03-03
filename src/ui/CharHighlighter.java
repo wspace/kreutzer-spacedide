@@ -1,4 +1,4 @@
-package spaced;
+package ui;
 
 import java.awt.Color;
 import java.awt.event.KeyEvent;

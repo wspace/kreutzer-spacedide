@@ -1,4 +1,4 @@
-package spaced;
+package ui;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -98,7 +98,7 @@ public class SpacedConsole extends JTextPane /* implements DocumentListener */{
 							return n;
 						}
 					} catch (InterruptedException e) {
-						e.printStackTrace();
+						holder.notifyAll();
 					}
 					return 0;
 				}
@@ -106,4 +106,9 @@ public class SpacedConsole extends JTextPane /* implements DocumentListener */{
 		}
 		return inputStream;
 	}
+
+	public void clear() {
+		setText("");
+	}
+	
 }

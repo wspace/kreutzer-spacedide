@@ -1,5 +1,6 @@
 package parser;
 
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -7,18 +8,19 @@ import java.util.List;
 import parser.WhitespaceOperationType.ArgType;
 
 public class WhitespaceParser {
-	
+
 	public static final String BREAKPOINT_EXPR = "#DBG_BREAK";
 
-	private final String sourceCode;
+	// private final String sourceCode;
 
-	public WhitespaceParser(String sourceCode) {
-		this.sourceCode = sourceCode;
+
+	public WhitespaceParser() {
+		// this.sourceCode = sourceCode;
 	}
 
-	public WhitespaceApp parse() {
+	public WhitespaceApp parse(String sourceCode) throws WhitespaceSyntaxError {
 		SyntaxScanner scanner = new SyntaxScanner(sourceCode,
-				LanguageDefinition.getWhitespaceLanguageDefinition());
+				WhitespaceLang.getLatestVersion());
 		HashMap<String, Integer> labels = new HashMap<String, Integer>();
 
 		// Scanning for label declarations
@@ -44,6 +46,11 @@ public class WhitespaceParser {
 		i = 0;
 		while (scanner.hasNext()) {
 			WhitespaceOperationType op = scanner.nextOperation();
+			
+			if (op == WhitespaceOperationType.UNDEFINED) {
+				throw new WhitespaceSyntaxError("Undefined operation", scanner.getPosition());
+			}
+			
 			// Label marks are skipped
 			if (op == WhitespaceOperationType.MARK_LABEL) {
 				scanner.nextLabel(); // Not doing this will confuse the scanner
@@ -62,9 +69,10 @@ public class WhitespaceParser {
 			case LABEL:
 				hasArg = true;
 				String label = scanner.nextLabel();
-				if (!labels.containsKey(label))
+				if (!labels.containsKey(label)) {
 					throw new WhitespaceSyntaxError("Undefined label",
 							scanner.getPosition());
+				}
 				arg = labels.get(label);
 				break;
 			}
@@ -72,16 +80,18 @@ public class WhitespaceParser {
 			if (hasArg)
 				pwo = new ParameterizedWhitespaceOperation(
 						scanner.getPosition(), i, op.opcode, arg);
-			else
+			else {
 				pwo = new ParameterizedWhitespaceOperation(
 						scanner.getPosition(), i, op.opcode);
+			}
 			operations[i] = pwo;
 			i++;
 		}
 
 		List<Integer> breakPoints = new ArrayList<Integer>();
 		int pos = 0;
-		for (int startIndex = 0; (pos = sourceCode.indexOf(BREAKPOINT_EXPR, startIndex)) != -1; startIndex = pos + 1) {
+		for (int startIndex = 0; (pos = sourceCode.indexOf(BREAKPOINT_EXPR,
+				startIndex)) != -1; startIndex = pos + 1) {
 			for (ParameterizedWhitespaceOperation op : operations) {
 				if (op.textPos >= pos) {
 					breakPoints.add(op.index);
@@ -90,7 +100,7 @@ public class WhitespaceParser {
 				}
 			}
 		}
-		
+
 		return new WhitespaceApp(operations, breakPoints);
 	}
 }

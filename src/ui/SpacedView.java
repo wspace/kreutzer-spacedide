@@ -1,4 +1,4 @@
-package spaced;
+package ui;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -31,8 +31,9 @@ import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 import javax.swing.text.StyledDocument;
 
-import parser.LanguageDefinition;
-import spaced.Spaced.Actions;
+import parser.WhitespaceLang;
+import spaced.Spaced;
+import spaced.Spaced.UIActions;
 
 public class SpacedView implements ITabManager {
 
@@ -116,52 +117,52 @@ public class SpacedView implements ITabManager {
 			// File menu
 			menu = new JMenu("File");
 			item = new JMenuItem("New Document");
-			item.setAction(actions.get(Actions.NEW_DOC));
+			item.setAction(actions.get(UIActions.NEW_DOC));
 			menu.add(item);
 			item = new JMenuItem("Open Document");
-			item.setAction(actions.get(Actions.OPEN));
+			item.setAction(actions.get(UIActions.OPEN));
 			menu.add(item);
 			item = new JMenuItem("Save Document");
-			item.setAction(actions.get(Actions.SAVE));
+			item.setAction(actions.get(UIActions.SAVE));
 			menu.add(item);
 			item = new JMenuItem("Close Document");
-			item.setAction(actions.get(Actions.CLOSE_DOC));
+			item.setAction(actions.get(UIActions.CLOSE_DOC));
 			menu.add(item);
 			item = new JMenuItem("Merge");
-			item.setAction(actions.get(Actions.MERGE));
+			item.setAction(actions.get(UIActions.MERGE));
 			menu.add(item);
 			item = new JMenuItem("Exit");
-			item.setAction(actions.get(Actions.QUIT));
+			item.setAction(actions.get(UIActions.QUIT));
 			menu.add(item);
 			menuBar.add(menu);
 			// Edit menu
 			menu = new JMenu("Edit");
 			item = new JMenuItem("Undo");
-			item.setAction(actions.get(Actions.UNDO));
+			item.setAction(actions.get(UIActions.UNDO));
 			menu.add(item);
 			item = new JMenuItem("Redo");
-			item.setAction(actions.get(Actions.REDO));
+			item.setAction(actions.get(UIActions.REDO));
 			menu.add(item);
 			item = new JMenuItem("Add Breakpoint");
-			item.setAction(actions.get(Actions.ADD_BREAKPOINT));
+			item.setAction(actions.get(UIActions.ADD_BREAKPOINT));
 			menu.add(item);
 			item = new JMenuItem("Remove Comments");
-			item.setAction(actions.get(Actions.REMOVE_COMMENTS));
+			item.setAction(actions.get(UIActions.REMOVE_COMMENTS));
 			menu.add(item);
 			item = new JMenuItem("Generate Output Code");
-			item.setAction(actions.get(Actions.GENERATE_OUTPUT_CODE));
+			item.setAction(actions.get(UIActions.GENERATE_OUTPUT_CODE));
 			menu.add(item);
 			menuBar.add(menu);
 			// View menu
 			menu = new JMenu("View");
 			item = new JMenuItem("Show Command Dialog");
-			item.setAction(actions.get(Actions.SHOW_COMMAND_DIALOG));
+			item.setAction(actions.get(UIActions.SHOW_COMMAND_DIALOG));
 			menu.add(item);
 			menuBar.add(menu);
 			// Info menu
 			menu = new JMenu("Info");
 			item = new JMenuItem("Credits");
-			item.setAction(actions.get(Actions.SHOW_CREDITS));
+			item.setAction(actions.get(UIActions.SHOW_CREDITS));
 			menu.add(item);
 			menuBar.add(menu);
 		}
@@ -187,7 +188,7 @@ public class SpacedView implements ITabManager {
 	public CommandDialog getCommandDialog() {
 		if (dialog == null) {
 			dialog = new CommandDialog(getFrame(), this,
-					LanguageDefinition.getWhitespaceLanguageDefinition());
+					WhitespaceLang.getWhitespaceLanguageDefinition());
 			dialog.setLocationRelativeTo(getFrame());
 		}
 		return dialog;
@@ -332,68 +333,68 @@ public class SpacedView implements ITabManager {
 			toolBar = new JToolBar();
 
 			JButton button = new JButton();
-			button.setAction(actions.get(Actions.NEW_DOC));
+			button.setAction(actions.get(UIActions.NEW_DOC));
 			button.setText("");
 			toolBar.add(button);
 
 			button = new JButton();
-			button.setAction(actions.get(Actions.OPEN));
+			button.setAction(actions.get(UIActions.OPEN));
 			button.setText("");
 			toolBar.add(button);
 
 			button = new JButton();
-			button.setAction(actions.get(Actions.SAVE));
+			button.setAction(actions.get(UIActions.SAVE));
 			button.setText("");
 			toolBar.add(button);
 
 			button = new JButton();
-			button.setAction(actions.get(Actions.CLOSE_DOC));
-			button.setText("");
-			toolBar.add(button);
-
-			toolBar.addSeparator();
-
-			button = new JButton();
-			button.setAction(actions.get(Actions.UNDO));
-			button.setText("");
-			toolBar.add(button);
-
-			button = new JButton();
-			button.setAction(actions.get(Actions.REDO));
-			button.setText("");
-			toolBar.add(button);
-
-			button = new JButton();
-			button.setAction(actions.get(Actions.ADD_BREAKPOINT));
+			button.setAction(actions.get(UIActions.CLOSE_DOC));
 			button.setText("");
 			toolBar.add(button);
 
 			toolBar.addSeparator();
 
 			button = new JButton();
-			button.setAction(actions.get(Actions.RUN));
+			button.setAction(actions.get(UIActions.UNDO));
 			button.setText("");
 			toolBar.add(button);
 
 			button = new JButton();
-			button.setAction(actions.get(Actions.STOP));
+			button.setAction(actions.get(UIActions.REDO));
+			button.setText("");
+			toolBar.add(button);
+
+			button = new JButton();
+			button.setAction(actions.get(UIActions.ADD_BREAKPOINT));
 			button.setText("");
 			toolBar.add(button);
 
 			toolBar.addSeparator();
 
 			button = new JButton();
-			button.setAction(actions.get(Actions.DEBUG));
+			button.setAction(actions.get(UIActions.RUN));
 			button.setText("");
 			toolBar.add(button);
 
 			button = new JButton();
-			button.setAction(actions.get(Actions.STEP));
+			button.setAction(actions.get(UIActions.STOP));
+			button.setText("");
+			toolBar.add(button);
+
+			toolBar.addSeparator();
+
+			button = new JButton();
+			button.setAction(actions.get(UIActions.DEBUG));
 			button.setText("");
 			toolBar.add(button);
 
 			button = new JButton();
-			button.setAction(actions.get(Actions.RESUME));
+			button.setAction(actions.get(UIActions.STEP));
+			button.setText("");
+			toolBar.add(button);
+
+			button = new JButton();
+			button.setAction(actions.get(UIActions.RESUME));
 			button.setText("");
 			toolBar.add(button);
 		}
@@ -557,6 +558,7 @@ public class SpacedView implements ITabManager {
 				new Object[] { panel, "Merge" }, 0);
 		return files;
 	}
+
 
 	// public static void main(String[] args) {
 	// SpacinatorView view = new SpacinatorView("Test", null);

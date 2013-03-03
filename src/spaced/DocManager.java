@@ -10,29 +10,34 @@ import java.util.Scanner;
 
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultStyledDocument;
+import javax.swing.text.Document;
 import javax.swing.text.StyledDocument;
 
 public class DocManager {
 
-	private int numDocs;
-	private Map<String, StyledDocument> docMap;
+	public static final int UNDEFINED_ID = -1;
+	
+	private int idCounter;
+	private Map<Integer, StyledDocument> docMap;
+
 
 	public DocManager() {
-		numDocs = 0;
-		docMap = new HashMap<String, StyledDocument>();
+		idCounter = 0;
+		docMap = new HashMap<Integer, StyledDocument>();
+	}
+	
+	private int getNextID() {
+		return idCounter++;
 	}
 
-	public StyledDocument createDocument() {
-		return createDocument("new" + numDocs++);
-	}
-
-	public StyledDocument createDocument(String name) {
+	public int createDocument() {
 		StyledDocument doc = new DefaultStyledDocument();
-		docMap.put(name, doc);
-		return doc;
+		int docID = getNextID();
+		docMap.put(docID, doc);
+		return docID;
 	}
 
-	public StyledDocument openDocument(File file) throws IOException {
+	public int openDocument(File file) throws IOException {
 		if (!(file.exists() && file.canRead())) {
 			throw new IOException("Couldn't load file " + file.getPath());
 		}
@@ -42,22 +47,23 @@ public class DocManager {
 			textBuilder.append(scanner.nextLine()).append('\n');
 		}
 		scanner.close();
-		StyledDocument doc = createDocument(file.getName());
+		int docID = createDocument();
+		Document doc = getDocument(docID);
 		try {
 			doc.insertString(0, textBuilder.toString(), null);
 		} catch (BadLocationException e) {
 			e.printStackTrace();
 		}
-		return doc;
+		return docID;
 	}
 
-	public StyledDocument getDocument(String name) {
-		return docMap.get(name);
+	public StyledDocument getDocument(int docID) {
+		return docMap.get(docID);
 	}
 
-	public void saveDocument(String name, File file) throws IOException,
+	public void saveDocument(int docID, File file) throws IOException,
 			BadLocationException {
-		StyledDocument doc = getDocument(name);
+		StyledDocument doc = getDocument(docID);
 		if (file == null || doc == null)
 			return;
 		if (!file.exists())
@@ -71,6 +77,20 @@ public class DocManager {
 		}
 		scanner.close();
 		pw.close();
+//		String newName = file.getName();
+//		renameDocument(docID, newName);
+	}
+	
+//	public void renameDocument(String oldName, String newName) {
+//		 if (docMap.containsKey(oldName)) {
+//			 StyledDocument doc = docMap.get(oldName);
+//			 docMap.remove(oldName);
+//			 docMap.put(newName, doc);
+//		 }
+//	}
+
+	public void closeDocument(String name) {
+		docMap.remove(name);
 	}
 
 }

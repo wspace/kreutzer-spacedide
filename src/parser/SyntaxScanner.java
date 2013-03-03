@@ -1,28 +1,27 @@
 package parser;
 
-import vm.WhitespaceRuntimeException;
 
 public class SyntaxScanner {
 
-	private LanguageDefinition language;
+	private WhitespaceLang lang;
 	private final String sourceCode;
 	private int pos;
-	
+
 	private static int END_REACHED = -1;
 
-	public SyntaxScanner(String sourceCode, LanguageDefinition language) {
+	public SyntaxScanner(String sourceCode, WhitespaceLang lang) {
 		this.sourceCode = sourceCode;
-		this.language = language;
+		this.lang = lang;
 		reset();
 	}
 
-	public WhitespaceOperationType nextOperation() {
+	public WhitespaceOperationType nextOperation() throws WhitespaceSyntaxError {
 		String prefix = "";
-		int max = language.getMaxKeywordLength();
+		int max = lang.getMaxKeywordLength();
 		for (int i = 0; i < max; i++) {
 			prefix += next();
-			if (language.isKeyWord(prefix)) {
-				return language.getOperation(prefix);
+			if (lang.isKeyWord(prefix)) {
+				return lang.getOperation(prefix);
 			}
 		}
 		return WhitespaceOperationType.UNDEFINED;
@@ -32,25 +31,25 @@ public class SyntaxScanner {
 		return nextValidCharPos() != END_REACHED;
 	}
 
-	public int nextInteger() {
+	public int nextInteger() throws WhitespaceSyntaxError {
 		char c;
 		boolean negative;
 		c = next();
-		if (c == language.getBinaryOneChar()) {
+		if (c == WhitespaceLang.MINUS) {
 			negative = true;
-		} else if (c == language.getBinaryZeroChar()) {
+		} else if (c == WhitespaceLang.PLUS) {
 			negative = false;
 		} else {
 			throw new WhitespaceSyntaxError("Expected sign definition", pos);
 		}
-		
+
 		int value = 0;
 		boolean nextDigitAvailable = true;
 		do {
 			c = next();
-			if (c == language.getBinaryZeroChar()) {
+			if (c == WhitespaceLang.BINARY_ZERO) {
 				value <<= 1;
-			} else if (c == language.getBinaryOneChar()) {
+			} else if (c == WhitespaceLang.BINARY_ONE) {
 				value = (value << 1) | 1;
 			} else {
 				nextDigitAvailable = false;
@@ -59,10 +58,10 @@ public class SyntaxScanner {
 		return negative ? -value : value;
 	}
 
-	public String nextLabel() {
+	public String nextLabel() throws WhitespaceSyntaxError {
 		char c;
 		StringBuilder label = new StringBuilder();
-		while ((c = next()) != language.getLabelTerminationChar()) {
+		while ((c = next()) != WhitespaceLang.LABEL_TERMINATION) {
 			label.append(c);
 		}
 		return label.toString();
@@ -70,19 +69,20 @@ public class SyntaxScanner {
 
 	private int nextValidCharPos() {
 		for (int i = pos + 1; i < sourceCode.length(); i++) {
-			if (!language.isIgnored(sourceCode.charAt(i)))
+			if (!lang.isIgnored(sourceCode.charAt(i)))
 				return i;
 		}
 		return END_REACHED;
 	}
 
-	private char next() {
+	private char next() throws WhitespaceSyntaxError {
 		pos = nextValidCharPos();
-		if (pos == END_REACHED)
-			throw new WhitespaceRuntimeException("Unexpected end");
+		if (pos == END_REACHED) {
+			throw new WhitespaceSyntaxError("Unexpected end", pos);
+		}
 		return sourceCode.charAt(pos);
 	}
-	
+
 	public void reset() {
 		pos = -1;
 	}

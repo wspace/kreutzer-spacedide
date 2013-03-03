@@ -1,4 +1,4 @@
-package spaced;
+package ui;
 
 import javax.swing.JLabel;
 

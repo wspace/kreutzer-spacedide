@@ -1,5 +1,4 @@
-package spaced;
-
+package ui;
 
 import java.awt.Dimension;
 import java.awt.GridLayout;
@@ -15,23 +14,25 @@ import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.text.BadLocationException;
 
-import parser.LanguageDefinition;
+import parser.WhitespaceLang;
 import parser.WhitespaceOperationType;
+import spaced.WhitespaceUtilities;
 
 public class CommandDialog extends JDialog {
 
 	private static final long serialVersionUID = 1L;
 
-	private ITabManager tabManager;
 	private JPanel panel;
 
-	private LanguageDefinition lang;
+	private WhitespaceLang lang;
+
+	private ITabManager tabManager;
 
 	public CommandDialog(JFrame owner, ITabManager tabManager,
-			LanguageDefinition lang) {
+			WhitespaceLang lang) {
 		super(owner);
-		this.tabManager = tabManager;
 		this.lang = lang;
+		this.tabManager = tabManager;
 		init();
 	}
 
@@ -55,7 +56,7 @@ public class CommandDialog extends JDialog {
 
 					@Override
 					public void actionPerformed(ActionEvent e) {
-						JTextPane editor = tabManager.getActiveTab().getEditor();
+						JTextPane editor = tabManager.getActiveEditor();
 						if (editor == null)
 							return;
 						int i = editor.getCaretPosition();
@@ -78,14 +79,15 @@ public class CommandDialog extends JDialog {
 
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					JTextPane editor = tabManager.getActiveTab().getEditor();
+					JTextPane editor = tabManager.getActiveEditor();
 					if (editor == null)
 						return;
 					String text = numberField.getText();
 					if (text == null || text.isEmpty())
 						return;
 					int n = Integer.valueOf(text);
-					String numberString = convertToWhitespaceNumber(n);
+					String numberString = WhitespaceUtilities
+							.toWhitespaceNumber(n);
 					int i = editor.getCaretPosition();
 					try {
 						editor.getDocument().insertString(i,
@@ -106,14 +108,15 @@ public class CommandDialog extends JDialog {
 
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					JTextPane editor = tabManager.getActiveTab().getEditor();
+					JTextPane editor = tabManager.getActiveEditor();
 					if (editor == null)
 						return;
 					String text = charField.getText();
 					if (text == null || text.isEmpty())
 						return;
 					char c = text.charAt(0);
-					String numberString = convertToWhitespaceNumber(c);
+					String numberString = WhitespaceUtilities
+							.toWhitespaceNumber(c);
 					int i = editor.getCaretPosition();
 					try {
 						editor.getDocument().insertString(i, c + numberString,
@@ -130,17 +133,4 @@ public class CommandDialog extends JDialog {
 		return panel;
 	}
 
-	private String convertToWhitespaceNumber(int n) {
-		String numberString = (n >= 0 ? lang.getBinaryZeroChar() : lang
-				.getBinaryOneChar())
-				+ Integer.toBinaryString(Math.abs(n))
-						.replace('1', lang.getBinaryOneChar())
-						.replace('0', lang.getBinaryZeroChar())
-				+ lang.getIntegerTerminationChar();
-		return numberString;
-	}
-
-	private String convertToWhitespaceNumber(char c) {
-		return convertToWhitespaceNumber((int) c);
-	}
 }
