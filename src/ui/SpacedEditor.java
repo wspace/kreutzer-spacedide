@@ -15,6 +15,7 @@ public class SpacedEditor extends JTextPane {
 	private UndoManager undoManager;
 
 	public SpacedEditor() {
+
 		undoManager = new UndoManager();
 	}
 

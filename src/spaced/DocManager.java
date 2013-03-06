@@ -9,29 +9,34 @@ import java.util.Map;
 import java.util.Scanner;
 
 import javax.swing.text.BadLocationException;
-import javax.swing.text.DefaultStyledDocument;
 import javax.swing.text.Document;
 import javax.swing.text.StyledDocument;
+
+import ui.SyntaxHighlighter;
+import ui.WhitespaceDocument;
 
 public class DocManager {
 
 	public static final int UNDEFINED_ID = -1;
+
+	private SyntaxHighlighter highlighter;
 	
 	private int idCounter;
-	private Map<Integer, StyledDocument> docMap;
+	private Map<Integer, WhitespaceDocument> docMap;
 
-
-	public DocManager() {
+	public DocManager(SyntaxHighlighter highlighter) {
+		this.highlighter = highlighter;
 		idCounter = 0;
-		docMap = new HashMap<Integer, StyledDocument>();
+		docMap = new HashMap<Integer, WhitespaceDocument>();
 	}
-	
+
 	private int getNextID() {
 		return idCounter++;
 	}
 
 	public int createDocument() {
-		StyledDocument doc = new DefaultStyledDocument();
+		WhitespaceDocument doc = new WhitespaceDocument();
+		doc.addDocumentListener(highlighter);
 		int docID = getNextID();
 		docMap.put(docID, doc);
 		return docID;
@@ -57,7 +62,7 @@ public class DocManager {
 		return docID;
 	}
 
-	public StyledDocument getDocument(int docID) {
+	public WhitespaceDocument getDocument(int docID) {
 		return docMap.get(docID);
 	}
 
@@ -77,17 +82,17 @@ public class DocManager {
 		}
 		scanner.close();
 		pw.close();
-//		String newName = file.getName();
-//		renameDocument(docID, newName);
+		// String newName = file.getName();
+		// renameDocument(docID, newName);
 	}
-	
-//	public void renameDocument(String oldName, String newName) {
-//		 if (docMap.containsKey(oldName)) {
-//			 StyledDocument doc = docMap.get(oldName);
-//			 docMap.remove(oldName);
-//			 docMap.put(newName, doc);
-//		 }
-//	}
+
+	// public void renameDocument(String oldName, String newName) {
+	// if (docMap.containsKey(oldName)) {
+	// StyledDocument doc = docMap.get(oldName);
+	// docMap.remove(oldName);
+	// docMap.put(newName, doc);
+	// }
+	// }
 
 	public void closeDocument(String name) {
 		docMap.remove(name);

@@ -8,9 +8,12 @@ public class WhitespaceApp {
 	private ParameterizedWhitespaceOperation[] operations;
 	private List<Integer> breakPoints;
 	
-	public WhitespaceApp(ParameterizedWhitespaceOperation[] operations, List<Integer> breakPoints) {
+	private int docID;
+	
+	public WhitespaceApp(ParameterizedWhitespaceOperation[] operations, List<Integer> breakPoints, int docID) {
 		this.operations = operations;
 		this.breakPoints = breakPoints;
+		this.docID = docID;
 	}
 
 	public ParameterizedWhitespaceOperation getOperation(int iPtr) {
@@ -21,6 +24,10 @@ public class WhitespaceApp {
 	
 	public boolean isBreakPoint(int iPtr) {
 		return breakPoints.contains(iPtr);
+	}
+	
+	public int getDocID() {
+		return docID;
 	}
 
 //	public static WhitespaceApp load(String bytecode) {

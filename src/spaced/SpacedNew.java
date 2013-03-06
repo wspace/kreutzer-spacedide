@@ -9,11 +9,13 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.text.AttributedCharacterIterator.Attribute;
 import java.util.Properties;
 
 import javax.swing.Action;
 import javax.swing.ActionMap;
 import javax.swing.JOptionPane;
+import javax.swing.JTextPane;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.text.BadLocationException;
@@ -21,12 +23,15 @@ import javax.swing.text.Document;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
+import javax.swing.text.StyleContext.NamedStyle;
 
 import parser.ParameterizedWhitespaceOperation;
 import parser.WhitespaceApp;
 import parser.WhitespaceParser;
 import parser.WhitespaceSyntaxError;
+import ui.SpacedEditor;
 import ui.SpacedViewNew;
+import ui.SyntaxHighlighter;
 import ui.UIAction;
 import vm.VMListener;
 import vm.WhitespaceMachine;
@@ -39,7 +44,7 @@ public class SpacedNew implements VMListener {
 	}
 
 	public static final String TITLE = "Spaced IDE";
-	public static final String VERSION = "1.1.0";
+	public static final String VERSION = "1.2";
 
 	private Properties properties;
 
@@ -51,8 +56,11 @@ public class SpacedNew implements VMListener {
 
 	private int numNewDocs = 0;
 
+	private SyntaxHighlighter highlighter = SyntaxHighlighter
+			.getDefaultHighlighter();
+
 	public SpacedNew() {
-		docManager = new DocManager();
+		docManager = new DocManager(highlighter);
 		initView();
 		initVM();
 		try {
@@ -116,10 +124,29 @@ public class SpacedNew implements VMListener {
 		if (properties.containsKey("default_dir")) {
 			lastDir = new File((String) properties.get("default_dir"));
 		}
+		highlighter = SyntaxHighlighter.getDefaultHighlighter();
+		if (properties.containsKey("space_color")) {
+			Color spaceColor = new Color(Integer.parseInt(
+					properties.get("space_color").toString(), 16));
+			highlighter
+					.addSpaceAttribute(StyleConstants.Background, spaceColor);
+		}
+		if (properties.containsKey("tab_color")) {
+			Color tabColor = new Color(Integer.parseInt(properties.get(
+					"tab_color").toString()));
+			highlighter.addSpaceAttribute(StyleConstants.Background, tabColor);
+		}
 	}
 
 	public void saveSettings() throws IOException {
-		properties.put("default_dir", lastDir.getParent());
+		properties.put("default_dir", lastDir.isFile() ? lastDir.getParent()
+				: lastDir.getPath());
+		Color spaceColor = (Color) highlighter
+				.getSpaceAttribute(StyleConstants.Background);
+		properties.put("space_color", Integer.toString(spaceColor.getRGB()));
+		Color tabColor = (Color) highlighter
+				.getTabAttribute(StyleConstants.Background);
+		properties.put("tab_color", Integer.toString(tabColor.getRGB()));
 		File file = new File(getPropertiesPath());
 		if (!file.exists()) {
 			if (!file.getParentFile().exists()) {
@@ -148,11 +175,22 @@ public class SpacedNew implements VMListener {
 						virtualMachine.getHeap().getValueMap());
 			}
 		});
+//		ParameterizedWhitespaceOperation pwo = virtualMachine.getCurrentPWO();
+//		int docID = virtualMachine.getAppDocID();
+//		StyledDocument doc = docManager.getDocument(docID);
+//		SimpleAttributeSet sas = new SimpleAttributeSet();
+//		StyleConstants.setBackground(sas, Color.blue);
+//		doc.setCharacterAttributes(pwo.textPos, pwo.length, sas, false);
 	}
 
 	@Override
 	public void vmResumed() {
-
+//		ParameterizedWhitespaceOperation pwo = virtualMachine.getCurrentPWO();
+//		int docID = virtualMachine.getAppDocID();
+//		StyledDocument doc = docManager.getDocument(docID);
+//		SimpleAttributeSet sas = new SimpleAttributeSet();
+//		StyleConstants.setBackground(sas, Color.white);
+//		doc.setCharacterAttributes(pwo.textPos, pwo.length, sas, false);
 	}
 
 	@Override
@@ -195,7 +233,7 @@ public class SpacedNew implements VMListener {
 			return null;
 		}
 		WhitespaceParser parser = new WhitespaceParser();
-		WhitespaceApp app = parser.parse(sourceCode);
+		WhitespaceApp app = parser.parse(sourceCode, docID);
 		return app;
 	}
 
@@ -260,13 +298,13 @@ public class SpacedNew implements VMListener {
 				"Are you sure you want to exit?", "Exit",
 				JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
 		if (state == JOptionPane.OK_OPTION) {
+			try {
+				saveSettings();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 			stop();
 			view.exit();
-		}
-		try {
-			saveSettings();
-		} catch (IOException e) {
-			e.printStackTrace();
 		}
 	}
 
@@ -556,16 +594,18 @@ public class SpacedNew implements VMListener {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
+
 				int docID = view.getActiveDocumentID();
-				SimpleAttributeSet sas = new SimpleAttributeSet();
-				StyleConstants.setBackground(sas, Color.green);
+				// SimpleAttributeSet sas = new SimpleAttributeSet();
+				// StyleConstants.setBackground(sas, Color.green);
 				try {
 					docManager.getDocument(docID).insertString(
 							view.getActiveEditor().getCaretPosition(),
-							WhitespaceParser.BREAKPOINT_EXPR, sas);
+							WhitespaceParser.BREAKPOINT_EXPR, null);
 				} catch (BadLocationException e1) {
 					e1.printStackTrace();
 				}
+
 				// FIXME
 			}
 		};

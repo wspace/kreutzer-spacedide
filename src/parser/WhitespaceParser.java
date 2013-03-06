@@ -13,12 +13,11 @@ public class WhitespaceParser {
 
 	// private final String sourceCode;
 
-
 	public WhitespaceParser() {
 		// this.sourceCode = sourceCode;
 	}
 
-	public WhitespaceApp parse(String sourceCode) throws WhitespaceSyntaxError {
+	public WhitespaceApp parse(String sourceCode, int docID) throws WhitespaceSyntaxError {
 		SyntaxScanner scanner = new SyntaxScanner(sourceCode,
 				WhitespaceLang.getLatestVersion());
 		HashMap<String, Integer> labels = new HashMap<String, Integer>();
@@ -46,11 +45,12 @@ public class WhitespaceParser {
 		i = 0;
 		while (scanner.hasNext()) {
 			WhitespaceOperationType op = scanner.nextOperation();
-			
+
 			if (op == WhitespaceOperationType.UNDEFINED) {
-				throw new WhitespaceSyntaxError("Undefined operation", scanner.getPosition());
+				throw new WhitespaceSyntaxError("Undefined operation",
+						scanner.getPosition());
 			}
-			
+
 			// Label marks are skipped
 			if (op == WhitespaceOperationType.MARK_LABEL) {
 				scanner.nextLabel(); // Not doing this will confuse the scanner
@@ -79,10 +79,14 @@ public class WhitespaceParser {
 			ParameterizedWhitespaceOperation pwo;
 			if (hasArg)
 				pwo = new ParameterizedWhitespaceOperation(
-						scanner.getPosition(), i, op.opcode, arg);
+						scanner.getPosition(), WhitespaceLang
+								.getLatestVersion().getMaxKeywordLength(), i, 
+						op.opcode, arg); // FIXME Length is not accurate
 			else {
 				pwo = new ParameterizedWhitespaceOperation(
-						scanner.getPosition(), i, op.opcode);
+						scanner.getPosition(), WhitespaceLang
+								.getLatestVersion().getMaxKeywordLength(), i,
+						op.opcode);
 			}
 			operations[i] = pwo;
 			i++;
@@ -101,6 +105,6 @@ public class WhitespaceParser {
 			}
 		}
 
-		return new WhitespaceApp(operations, breakPoints);
+		return new WhitespaceApp(operations, breakPoints, docID);
 	}
 }

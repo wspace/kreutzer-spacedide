@@ -7,7 +7,7 @@ import java.util.TreeSet;
 
 import javax.swing.table.AbstractTableModel;
 
-public class MemoryTableModel2 extends AbstractTableModel {
+public class MemoryTableModel extends AbstractTableModel {
 
 	private static final long serialVersionUID = 1L;
 
@@ -20,7 +20,7 @@ public class MemoryTableModel2 extends AbstractTableModel {
 	private Object[] colNames;
 	private Object[][] data;
 
-	public MemoryTableModel2() {
+	public MemoryTableModel() {
 		clear();
 	}
 

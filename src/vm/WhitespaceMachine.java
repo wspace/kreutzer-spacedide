@@ -255,7 +255,7 @@ public class WhitespaceMachine implements Runnable {
 		case READ_CHAR:
 			temp = readChar();
 			heap.store(stack.pop(), temp);
-			System.out.println("Char read: " + temp);
+//			System.out.println("Char read: " + temp);
 			break;
 		case UNDEFINED:
 			reportError("Reached undefined operation!");
@@ -383,6 +383,14 @@ public class WhitespaceMachine implements Runnable {
 
 	public Heap getHeap() {
 		return heap;
+	}
+
+	/**
+	 * Returns the doc ID of the document that corresponds to the current program
+	 * @return
+	 */
+	public int getAppDocID() {
+		return program.getDocID();
 	}
 
 }

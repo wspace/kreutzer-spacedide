@@ -57,7 +57,7 @@ public class StatusBar extends JLabel implements VMListener {
 			builder.append("pos=" + pwo.textPos + ";");
 		}
 		builder.append("</body></html>");
-//		System.out.println(builder);
+		System.out.println("update: " + builder);
 		setText(builder.toString());
 	}
 

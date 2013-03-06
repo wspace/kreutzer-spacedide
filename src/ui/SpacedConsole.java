@@ -43,7 +43,7 @@ public class SpacedConsole extends JTextPane /* implements DocumentListener */{
 						if (waitingForInput) {
 							char c = e.getDocument().getText(e.getOffset(), 1)
 									.charAt(0);
-							System.out.println("Char: " + c);
+//							System.out.println("Char: " + c);
 							holder.add((int) c);
 							holder.notify();
 						}

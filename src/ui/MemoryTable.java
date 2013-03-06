@@ -4,14 +4,14 @@ import java.util.Map;
 
 import javax.swing.JTable;
 
-public class MemoryTable2 extends JTable {
+public class MemoryTable extends JTable {
 
 	private static final long serialVersionUID = 1L;
 
-	private MemoryTableModel2 model;
+	private MemoryTableModel model;
 
-	public MemoryTable2() {
-		model = new MemoryTableModel2();
+	public MemoryTable() {
+		model = new MemoryTableModel();
 		setModel(model);
 	}
 

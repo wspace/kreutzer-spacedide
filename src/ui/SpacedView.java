@@ -54,7 +54,7 @@ public class SpacedView implements ITabManager {
 	private SpacedConsole console;
 //	private SpacedPrompt prompt;
 	private JScrollPane memoryTableScrollPane;
-	private MemoryTable2 memoryTable;
+	private MemoryTable memoryTable;
 	private JPanel rightPanel;
 	private StatusBar statusBar;
 
@@ -266,9 +266,9 @@ public class SpacedView implements ITabManager {
 		return console;
 	}
 
-	public MemoryTable2 getMemoryTable() {
+	public MemoryTable getMemoryTable() {
 		if (memoryTable == null) {
-			memoryTable = new MemoryTable2();
+			memoryTable = new MemoryTable();
 		}
 		return memoryTable;
 	}

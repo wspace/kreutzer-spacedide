@@ -7,6 +7,7 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 
 import javax.swing.ActionMap;
@@ -52,7 +53,7 @@ public class SpacedViewNew implements ITabManager {
 
 	private SpacedConsole console;
 
-	private MemoryTable2 memoryTable;
+	private MemoryTable memoryTable;
 	private StatusBar statusBar;
 
 	private String title;
@@ -73,11 +74,19 @@ public class SpacedViewNew implements ITabManager {
 		this.actions = actions;
 		editorMap = new HashMap<Integer, SpacedEditor>();
 		indexMap = new HashMap<Integer, Integer>();
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				init();
-			}
-		});
+		try {
+			SwingUtilities.invokeAndWait(new Runnable() {
+				public void run() {
+					init();
+				}
+			});
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvocationTargetException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 	}
 
@@ -232,9 +241,9 @@ public class SpacedViewNew implements ITabManager {
 		return console;
 	}
 
-	public MemoryTable2 getMemoryTable() {
+	public MemoryTable getMemoryTable() {
 		if (memoryTable == null) {
-			memoryTable = new MemoryTable2();
+			memoryTable = new MemoryTable();
 		}
 		return memoryTable;
 	}
@@ -375,8 +384,12 @@ public class SpacedViewNew implements ITabManager {
 		SpacedEditor editor = new SpacedEditor();
 		editor.loadDocument(doc, docID);
 		editorMap.put(docID, editor);
-		JScrollPane scrollPane = new JScrollPane();
-		scrollPane.setViewportView(editor);
+		JPanel panel = new JPanel();
+		panel.setLayout(new BorderLayout());
+		panel.add(editor, BorderLayout.CENTER);
+		JScrollPane scrollPane = new JScrollPane(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		scrollPane.setViewportView(panel);
+		scrollPane.getVerticalScrollBar().setUnitIncrement(16);
 		getTabbedPane().addTab(title, scrollPane);
 		getTabbedPane().setSelectedComponent(scrollPane);
 		int index = getTabbedPane().getSelectedIndex();
