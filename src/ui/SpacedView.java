@@ -2,21 +2,18 @@ package ui;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
 
 import javax.swing.ActionMap;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -25,45 +22,58 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
-import javax.swing.JTextField;
-import javax.swing.JTextPane;
 import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
 import javax.swing.text.StyledDocument;
 
 import parser.WhitespaceLang;
-import spaced.Spaced;
-import spaced.Spaced.UIActions;
+import spaced.DocManager;
+import spaced.Spaced.ActionType;
 
 public class SpacedView implements ITabManager {
 
 	public static final Dimension DEFAULT_SIZE = new Dimension(800, 600);
 
-	private final String title;
-	// private IAppController appController;
-
-	private ActionMap actions;
-
 	private JFrame frame;
+
 	private JSplitPane mainSplitPane;
 	private JSplitPane centerSplitPane;
+
 	private JTabbedPane tabbedPane;
-	private JToolBar toolBar;
-	private JPanel ioPanel;
-	private JScrollPane consoleScrollPane;
-	private SpacedConsole console;
-//	private SpacedPrompt prompt;
-	private JScrollPane memoryTableScrollPane;
-	private MemoryTable memoryTable;
-	private JPanel rightPanel;
-	private StatusBar statusBar;
 
 	private JMenuBar menuBar;
+	private JToolBar toolBar;
+
 	private CommandDialog dialog;
+
+	private JPanel ioPanel;
+
+	private JScrollPane consoleScrollPane;
+	private JScrollPane memoryTableScrollPane;
+
+	private SpacedConsole console;
+
+	private MemoryTable memoryTable;
+	private StatusBar statusBar;
+
+	private String title;
+	private ActionMap actions;
+
+	/**
+	 * Links an editor to a given document ID
+	 */
+	private HashMap<Integer, SpacedEditor> editorMap;
+
+	/**
+	 * Links a document ID to a tab index
+	 */
+	private HashMap<Integer, Integer> indexMap;
+
 	public SpacedView(String title, ActionMap actions) {
 		this.title = title;
 		this.actions = actions;
-		// this.appController = docManager;
+		editorMap = new HashMap<Integer, SpacedEditor>();
+		indexMap = new HashMap<Integer, Integer>();
 		try {
 			SwingUtilities.invokeAndWait(new Runnable() {
 				public void run() {
@@ -71,10 +81,17 @@ public class SpacedView implements ITabManager {
 				}
 			});
 		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (InvocationTargetException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+
+	}
+
+	public void init() {
+		getFrame();
 	}
 
 	public JFrame getFrame() {
@@ -86,13 +103,7 @@ public class SpacedView implements ITabManager {
 
 				@Override
 				public void windowClosing(WindowEvent e) {
-					int state = JOptionPane.showConfirmDialog(frame,
-							"Are you sure you want to exit?", "Exit?",
-							JOptionPane.YES_NO_OPTION);
-					if (state == JOptionPane.YES_OPTION) {
-						frame.setVisible(false);
-						frame.dispose();
-					}
+					actions.get(ActionType.QUIT).actionPerformed(null);
 				}
 
 			});
@@ -105,10 +116,6 @@ public class SpacedView implements ITabManager {
 		return frame;
 	}
 
-	private void init() {
-		getFrame();
-	}
-
 	public JMenuBar getMenuBar() {
 		if (menuBar == null) {
 			menuBar = new JMenuBar();
@@ -117,78 +124,80 @@ public class SpacedView implements ITabManager {
 			// File menu
 			menu = new JMenu("File");
 			item = new JMenuItem("New Document");
-			item.setAction(actions.get(UIActions.NEW_DOC));
+			item.setAction(actions.get(ActionType.NEW_DOC));
 			menu.add(item);
 			item = new JMenuItem("Open Document");
-			item.setAction(actions.get(UIActions.OPEN));
+			item.setAction(actions.get(ActionType.OPEN));
 			menu.add(item);
 			item = new JMenuItem("Save Document");
-			item.setAction(actions.get(UIActions.SAVE));
+			item.setAction(actions.get(ActionType.SAVE));
 			menu.add(item);
 			item = new JMenuItem("Close Document");
-			item.setAction(actions.get(UIActions.CLOSE_DOC));
+			item.setAction(actions.get(ActionType.CLOSE_DOC));
 			menu.add(item);
 			item = new JMenuItem("Merge");
-			item.setAction(actions.get(UIActions.MERGE));
+			item.setAction(actions.get(ActionType.MERGE));
 			menu.add(item);
 			item = new JMenuItem("Exit");
-			item.setAction(actions.get(UIActions.QUIT));
+			item.setAction(actions.get(ActionType.QUIT));
 			menu.add(item);
 			menuBar.add(menu);
 			// Edit menu
 			menu = new JMenu("Edit");
 			item = new JMenuItem("Undo");
-			item.setAction(actions.get(UIActions.UNDO));
+			item.setAction(actions.get(ActionType.UNDO));
 			menu.add(item);
 			item = new JMenuItem("Redo");
-			item.setAction(actions.get(UIActions.REDO));
+			item.setAction(actions.get(ActionType.REDO));
 			menu.add(item);
 			item = new JMenuItem("Add Breakpoint");
-			item.setAction(actions.get(UIActions.ADD_BREAKPOINT));
+			item.setAction(actions.get(ActionType.ADD_BREAKPOINT));
 			menu.add(item);
 			item = new JMenuItem("Remove Comments");
-			item.setAction(actions.get(UIActions.REMOVE_COMMENTS));
+			item.setAction(actions.get(ActionType.REMOVE_COMMENTS));
 			menu.add(item);
 			item = new JMenuItem("Generate Output Code");
-			item.setAction(actions.get(UIActions.GENERATE_OUTPUT_CODE));
+			item.setAction(actions.get(ActionType.GENERATE_OUTPUT_CODE));
+			menu.add(item);
+			menuBar.add(menu);
+			// Run menu
+			menu = new JMenu("Run");
+			item = new JMenuItem();
+			item.setAction(actions.get(ActionType.RUN));
+			menu.add(item);
+			item = new JMenuItem();
+			item.setAction(actions.get(ActionType.STOP));
+			menu.add(item);
+			item = new JMenuItem();
+			item.setAction(actions.get(ActionType.DEBUG));
+			menu.add(item);
+			item = new JMenuItem();
+			item.setAction(actions.get(ActionType.RESUME));
+			menu.add(item);
+			item = new JMenuItem();
+			item.setAction(actions.get(ActionType.STEP));
 			menu.add(item);
 			menuBar.add(menu);
 			// View menu
 			menu = new JMenu("View");
 			item = new JMenuItem("Show Command Dialog");
-			item.setAction(actions.get(UIActions.SHOW_COMMAND_DIALOG));
+			item.setAction(actions.get(ActionType.SHOW_COMMAND_DIALOG));
 			menu.add(item);
 			menuBar.add(menu);
 			// Info menu
 			menu = new JMenu("Info");
 			item = new JMenuItem("Credits");
-			item.setAction(actions.get(UIActions.SHOW_CREDITS));
+			item.setAction(actions.get(ActionType.SHOW_CREDITS));
 			menu.add(item);
 			menuBar.add(menu);
 		}
 		return menuBar;
 	}
 
-	// public JDialog getMergeDialog() {
-	// if (mergeDialog == null) {
-	// mergeDialog = new JDialog();
-	// GridLayout layout = new GridLayout(0, 3);
-	// layout.setHgap(20);
-	// layout.setVgap(20);
-	// JPanel dialogPanel = new JPanel(layout);
-	// JLabel textLabel = new JLabel("Text File:");
-	// dialogPanel.add(textLabel);
-	// JTextField textField = new JTextField();
-	// dialogPanel.add(textField);
-	// mergeDialog.setLayout(layout);
-	// }
-	// return mergeDialog;
-	// }
-
 	public CommandDialog getCommandDialog() {
 		if (dialog == null) {
 			dialog = new CommandDialog(getFrame(), this,
-					WhitespaceLang.getWhitespaceLanguageDefinition());
+					WhitespaceLang.getLatestVersion());
 			dialog.setLocationRelativeTo(getFrame());
 		}
 		return dialog;
@@ -218,45 +227,11 @@ public class SpacedView implements ITabManager {
 			centerSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 			centerSplitPane.setContinuousLayout(true);
 			centerSplitPane.setDividerSize(4);
-			centerSplitPane.setRightComponent(getRightPanel());
+			centerSplitPane.setRightComponent(getMemoryTableScrollPane());
 			centerSplitPane.setLeftComponent(getTabbedPane());
 			centerSplitPane.setPreferredSize(new Dimension(-1, 400));
 		}
 		return centerSplitPane;
-	}
-
-	public JPanel getRightPanel() {
-		if (rightPanel == null) {
-			rightPanel = new JPanel();
-			rightPanel.setLayout(new BorderLayout());
-			rightPanel.add(getMemoryTableScrollPane(), BorderLayout.CENTER);
-//			rightPanel.add(getStatusBar(), BorderLayout.SOUTH);
-		}
-		return rightPanel;
-	}
-
-	// public JSplitPane getRightSplitPane() {
-	// if (rightSplitPane == null) {
-	// rightSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-	// rightSplitPane.setContinuousLayout(true);
-	// rightSplitPane.setLeftComponent(getTabbedPane());
-	// rightSplitPane.setRightComponent(getMemoryTableScrollPane());
-	// }
-	// return rightSplitPane;
-	// }
-
-	// public JPanel getHelperPanel() {
-	// if (helperPanel == null) {
-	// helperPanel = new JPanel();
-	// helperPanel.setPreferredSize(new Dimension(100, -1));
-	// }
-	// return helperPanel;
-	// }
-
-	public EditorTab getActiveTab() {
-		if (getTabbedPane().getTabCount() == 0)
-			return null;
-		return (EditorTab) getTabbedPane().getSelectedComponent();
 	}
 
 	public SpacedConsole getConsole() {
@@ -280,17 +255,6 @@ public class SpacedView implements ITabManager {
 		return statusBar;
 	}
 
-	// public JScrollPane getEditorScrollPane() {
-	// if (editorScrollPane == null) {
-	// editorScrollPane = new JScrollPane(
-	// JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
-	// JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-	// editorScrollPane.setViewportView(getEditor());
-	// editorScrollPane.setPreferredSize(new Dimension(500, 400));
-	// }
-	// return editorScrollPane;
-	// }
-
 	public JPanel getIOPanel() {
 		if (ioPanel == null) {
 			ioPanel = new JPanel();
@@ -301,13 +265,6 @@ public class SpacedView implements ITabManager {
 		}
 		return ioPanel;
 	}
-
-//	public SpacedPrompt getPrompt() {
-//		if (prompt == null) {
-//			prompt = new SpacedPrompt(getConsole().getPrintStream());
-//		}
-//		return prompt;
-//	}
 
 	public JScrollPane getConsoleScrollPane() {
 		if (consoleScrollPane == null) {
@@ -333,68 +290,68 @@ public class SpacedView implements ITabManager {
 			toolBar = new JToolBar();
 
 			JButton button = new JButton();
-			button.setAction(actions.get(UIActions.NEW_DOC));
+			button.setAction(actions.get(ActionType.NEW_DOC));
 			button.setText("");
 			toolBar.add(button);
 
 			button = new JButton();
-			button.setAction(actions.get(UIActions.OPEN));
+			button.setAction(actions.get(ActionType.OPEN));
 			button.setText("");
 			toolBar.add(button);
 
 			button = new JButton();
-			button.setAction(actions.get(UIActions.SAVE));
+			button.setAction(actions.get(ActionType.SAVE));
 			button.setText("");
 			toolBar.add(button);
 
 			button = new JButton();
-			button.setAction(actions.get(UIActions.CLOSE_DOC));
-			button.setText("");
-			toolBar.add(button);
-
-			toolBar.addSeparator();
-
-			button = new JButton();
-			button.setAction(actions.get(UIActions.UNDO));
-			button.setText("");
-			toolBar.add(button);
-
-			button = new JButton();
-			button.setAction(actions.get(UIActions.REDO));
-			button.setText("");
-			toolBar.add(button);
-
-			button = new JButton();
-			button.setAction(actions.get(UIActions.ADD_BREAKPOINT));
+			button.setAction(actions.get(ActionType.CLOSE_DOC));
 			button.setText("");
 			toolBar.add(button);
 
 			toolBar.addSeparator();
 
 			button = new JButton();
-			button.setAction(actions.get(UIActions.RUN));
+			button.setAction(actions.get(ActionType.UNDO));
 			button.setText("");
 			toolBar.add(button);
 
 			button = new JButton();
-			button.setAction(actions.get(UIActions.STOP));
+			button.setAction(actions.get(ActionType.REDO));
+			button.setText("");
+			toolBar.add(button);
+
+			button = new JButton();
+			button.setAction(actions.get(ActionType.ADD_BREAKPOINT));
 			button.setText("");
 			toolBar.add(button);
 
 			toolBar.addSeparator();
 
 			button = new JButton();
-			button.setAction(actions.get(UIActions.DEBUG));
+			button.setAction(actions.get(ActionType.RUN));
 			button.setText("");
 			toolBar.add(button);
 
 			button = new JButton();
-			button.setAction(actions.get(UIActions.STEP));
+			button.setAction(actions.get(ActionType.STOP));
+			button.setText("");
+			toolBar.add(button);
+
+			toolBar.addSeparator();
+
+			button = new JButton();
+			button.setAction(actions.get(ActionType.DEBUG));
 			button.setText("");
 			toolBar.add(button);
 
 			button = new JButton();
-			button.setAction(actions.get(UIActions.RESUME));
+			button.setAction(actions.get(ActionType.STEP));
+			button.setText("");
+			toolBar.add(button);
+
+			button = new JButton();
+			button.setAction(actions.get(ActionType.RESUME));
 			button.setText("");
 			toolBar.add(button);
 		}
@@ -423,63 +380,39 @@ public class SpacedView implements ITabManager {
 		return null;
 	}
 
-	public void clearMemoryTable() {
-		getMemoryTable().clear();
+	public void openTab(String title, int docID, StyledDocument doc) {
+		SpacedEditor editor = new SpacedEditor();
+		editor.loadDocument(doc, docID);
+		editorMap.put(docID, editor);
+		JPanel panel = new JPanel();
+		panel.setLayout(new BorderLayout());
+		panel.add(editor, BorderLayout.CENTER);
+		JScrollPane scrollPane = new JScrollPane(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		scrollPane.setViewportView(panel);
+		scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+		getTabbedPane().addTab(title, scrollPane);
+		getTabbedPane().setSelectedComponent(scrollPane);
+		int index = getTabbedPane().getSelectedIndex();
+		indexMap.put(index, docID);
 	}
 
-	public void clearConsole() {
-		getConsole().setText("");
+	public SpacedEditor getEditor(int docID) {
+		return editorMap.get(docID);
 	}
 
-	public String getText() {
-		EditorTab tab = getActiveTab();
-		if (tab != null)
-			return tab.getEditor().getText();
-		return "";
-	}
-
-	public void setText(String text) {
-		EditorTab tab = getActiveTab();
-		if (tab != null)
-			tab.getEditor().setText(text);
-	}
-
-	public int openTab(StyledDocument doc, String title) {
-		JTextPane editor = new JTextPane();
-		editor.setDocument(doc);
-		int i = getTabbedPane().getTabCount();
-		EditorTab tab = new EditorTab(editor);
-		getTabbedPane().addTab(title, tab);
-		getTabbedPane().setSelectedIndex(i);
-		return i;
-	}
-
-	public void closeActiveTab() {
-		if (getTabbedPane().getTabCount() != 0) {
-			int i = getTabbedPane().getSelectedIndex();
-			getTabbedPane().remove(i);
+	public int getActiveDocumentID() {
+		int index = getTabbedPane().getSelectedIndex();
+		if (indexMap.containsKey(index)) {
+			return indexMap.get(index);
 		}
+		return DocManager.UNDEFINED_ID;
 	}
 
-	public void setSelectedTabMark(boolean edited) {
-		int i = getTabbedPane().getSelectedIndex();
-		if (i < 0 || i >= getTabbedPane().getTabCount())
-			return;
-		String title = getTabbedPane().getTitleAt(i);
-		if (title.endsWith("*")) {
-			if (!edited) {
-				title = title.substring(0, title.length() - 1);
-			}
-		} else {
-			if (edited) {
-				title = title.concat("*");
-			}
-		}
-		getTabbedPane().setTitleAt(i, title);
+	public SpacedEditor getActiveEditor() {
+		return getEditor(getActiveDocumentID());
 	}
 
 	public InputStream getInputStream() {
-//		return getPrompt().getInputStream();
 		return getConsole().getInputStream();
 	}
 
@@ -487,81 +420,13 @@ public class SpacedView implements ITabManager {
 		return getConsole().getPrintStream();
 	}
 
-	public void setSelectedTabTitle(String name) {
-		if (getTabbedPane().getTabCount() > 0) {
-			int i = getTabbedPane().getSelectedIndex();
-			getTabbedPane().setTitleAt(i, name);
-		}
+	public void showErrorDialog(String msg) {
+		JOptionPane.showMessageDialog(getFrame(), msg, "Error",
+				JOptionPane.ERROR_MESSAGE);
 	}
 
-	public void showCredits() {
-		JOptionPane
-				.showMessageDialog(
-						getFrame(),
-						Spaced.TITLE
-								+ " "
-								+ Spaced.VERSION
-								+ "\nDeveloped by Sebastian Kreutzer 2012/2013\nSee https://sourceforge.net/projects/spacedide/ for further information.",
-						"Credits", JOptionPane.INFORMATION_MESSAGE);
+	public void exit() {
+		getFrame().dispose();
 	}
-
-	public String showCodeGenDialog() {
-		String result = JOptionPane.showInputDialog(getFrame(), "Insert text:",
-				"Code generation", JOptionPane.OK_CANCEL_OPTION);
-		return result;
-	}
-
-	public File[] showMergeDialog(File defaultDir) {
-		final File defDir = defaultDir;
-		final File[] files = new File[2];
-		JPanel panel = new JPanel();
-		GridLayout layout = new GridLayout(0, 3, 10, 10);
-		panel.setLayout(layout);
-		JLabel label = new JLabel("Input file: ");
-		panel.add(label);
-		final JTextField text = new JTextField();
-		text.setEditable(false);
-		panel.add(text);
-		JButton button = new JButton("Select");
-		button.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				File f = showOpenDialog(defDir);
-				if (f != null) {
-					files[0] = f;
-					text.setText(f.getPath());
-				}
-			}
-		});
-		panel.add(button);
-		JLabel label2 = new JLabel("Ouput file: ");
-		panel.add(label2);
-		final JTextField text2 = new JTextField();
-		text2.setEditable(false);
-		panel.add(text2);
-		JButton button2 = new JButton("Select");
-		button2.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				File f = showOpenDialog(defDir);
-				if (f != null) {
-					files[1] = f;
-					text2.setText(f.getPath());
-				}
-			}
-		});
-		panel.add(button2);
-		JOptionPane.showOptionDialog(getFrame(), "Select file", "Merge",
-				JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null,
-				new Object[] { panel, "Merge" }, 0);
-		return files;
-	}
-
-
-	// public static void main(String[] args) {
-	// SpacinatorView view = new SpacinatorView("Test", null);
-	// }
 
 }

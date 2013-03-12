@@ -1,4 +1,4 @@
-package ui;
+package diagram;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -28,7 +28,7 @@ import javax.swing.text.StyledDocument;
 
 import parser.WhitespaceLang;
 import spaced.DocManager;
-import spaced.SpacedNew.ActionType;
+import spaced.Spaced.ActionType;
 
 public class SpacedViewNew implements ITabManager {
 

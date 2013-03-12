@@ -1,4 +1,4 @@
-package spaced;
+package diagram;
 
 import java.awt.Color;
 import java.awt.event.ActionEvent;
@@ -30,7 +30,7 @@ import parser.WhitespaceApp;
 import parser.WhitespaceParser;
 import parser.WhitespaceSyntaxError;
 import ui.SpacedEditor;
-import ui.SpacedViewNew;
+import ui.SpacedView;
 import ui.SyntaxHighlighter;
 import ui.UIAction;
 import vm.VMListener;
@@ -48,7 +48,7 @@ public class SpacedNew implements VMListener {
 
 	private Properties properties;
 
-	private SpacedViewNew view;
+	private SpacedView view;
 	private WhitespaceMachine virtualMachine;
 
 	private DocManager docManager;
@@ -93,7 +93,7 @@ public class SpacedNew implements VMListener {
 		actionMap.put(ActionType.RESUME, getResumeAction());
 		actionMap.put(ActionType.SHOW_COMMAND_DIALOG, getCommandDialogAction());
 		actionMap.put(ActionType.SHOW_CREDITS, getCreditsAction());
-		view = new SpacedViewNew(TITLE, actionMap);
+		view = new SpacedView(TITLE, actionMap);
 	}
 
 	public void initVM() {
